@@ -104,6 +104,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #基础设置
         super().__init__(parent)
         self.setupUi(self)
+        if os.path.exists(os.path.join(os.getcwd(),'ui','ra3.ico')):
+            self.icon = QIcon(os.path.join(os.getcwd(),'ui','ra3.ico'))
+            self.setWindowIcon(self.icon)
         self.version = '1.0.0'
         #--------------------------
         #连接信号
