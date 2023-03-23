@@ -6,6 +6,7 @@
 '''
 import os
 import sys
+import json
 import py7zr
 import requests
 import webbrowser
@@ -14,6 +15,7 @@ from PySide6.QtCore import Qt, QStringListModel, Signal, QObject
 from PySide6.QtGui import QColor,QIcon, QTextCursor
 from ui.MainWindow import Ui_MainWindow
 from threading import Thread
+import ctypes.wintypes
 from src import AutoProcess
 
 #常量
@@ -22,6 +24,7 @@ REFRESH = 101
 GETMODS = 200
 GETMODINFO = 201
 GETNEWVERSION = 202
+GETUPDATELOG = 203
 GETOTHER = 210
 INFO = 300
 WARNING = 301
@@ -37,6 +40,7 @@ class CustomizeSingals(QObject):
     download_err = Signal(Exception)
     set_new_version = Signal(str)
     get_new_version_err = Signal(str)
+    set_plainTextEdit_updatelog = Signal(str)
 class Process():
     @staticmethod
     def set_comboBox(comboBox:QComboBox, texts:list):
@@ -56,12 +60,15 @@ class Process():
             singals.set_Status_Tip.connect(window.set_Status_Tip)
             singals.set_new_version.connect(window.set_new_version)
             singals.get_new_version_err.connect(window.get_new_version_err)
+            singals.set_plainTextEdit_updatelog.connect(window.set_plainTextEdit_updatelog)
             if not state:
                 if mode == INIT:
                     if source == GETMODS:
                         singals.set_Status_Tip.emit('获取云AR信息失败:{}'.format(res))
                     elif source == GETNEWVERSION:
                         singals.get_new_version_err.emit(res)
+                    elif source == GETUPDATELOG:
+                        singals.set_plainTextEdit_updatelog.emit('获取更新日志失败:{}'.format(res))
                     return    
                 elif mode == REFRESH:
                     if source == GETMODS:
@@ -69,11 +76,13 @@ class Process():
                     elif source == GETMODINFO:
                         singals.message_box.emit(WARNING,'出现错误',"获取mod信息失败:{}".format(res),QMessageBox.Ok,QMessageBox.Ok)
             if source == GETMODS:
-                singals.set_listView_Network.emit(res)
+                singals.set_listView_Network.emit(json.loads(res))
             elif source == GETMODINFO:
-                singals.set_network_page.emit(res)
+                singals.set_network_page.emit(json.loads(res))
             elif source == GETNEWVERSION:
-                singals.set_new_version.emit(res['version'])
+                singals.set_new_version.emit(json.loads(res)['version'])
+            elif source == GETUPDATELOG:
+                singals.set_plainTextEdit_updatelog.emit(res.decode())
         except Exception as err:
             singals.message_box.emit((WARNING,'出现错误',"获取信息失败:{}".format(err),QMessageBox.Ok,QMessageBox.Ok))
     @staticmethod
@@ -130,7 +139,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listView_local_qsl = QStringListModel()
         self.listView_Network_qsl = QStringListModel()
         self.fileDialog = QFileDialog(self)
-        self.base_mod_path = os.path.join(os.path.splitdrive(os.environ['systemroot'])[0],os.environ['homepath'],'Documents','Red Alert 3','Mods')
+        try:
+            buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+            ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
+            if buf == '':
+                raise Exception('目录获取失败')
+            self.documents_path = buf.value
+        except:
+            self.base_mod_path = os.path.join(os.path.splitdrive(os.environ['systemroot'])[0],os.environ['homepath'],'Documents','Red Alert 3','Mods')
+        else:
+            self.base_mod_path = os.path.join(self.documents_path,'Red Alert 3','Mods')
         self.cloud_mods = {}
         self.cloud_mod_source = (None,{})
         self.isdownloading = False
@@ -154,18 +172,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #获取更新信息
         t = Thread(target=AutoProcess.get_cloud,args=('https://www.chunshengserver.cn/files/RA3mods/RA3_affiliated_mod_downloader.json',Process.get_cloud_data,(self,INIT,GETNEWVERSION)),daemon=True)
         t.start()
+        #获取更新日志
+        t = Thread(target=AutoProcess.get_cloud,args=('https://www.chunshengserver.cn/files/RA3mods/更新日志.txt',Process.get_cloud_data,(self,INIT,GETUPDATELOG)),daemon=True)
+        t.start()
     def __comboBox_mods_changed(self):
         if self.mods[0] is False:
             return
-        # currentText = self.comboBox_mods.currentText()#为了保证数据安全采用字符串匹配的方式
-        # find = False
-        # for mod_path in self.mods[1]:
-        #     if os.path.split(mod_path)[1].removesuffix('.skudef') == currentText:
-        #         self.select_mod = mod_path
-        #         find = True
-        #         break
-        # if find is False:
-        #     return
         #显示本地列表内容
         currentIndex = self.comboBox_mods.currentIndex()#因为有重复的名称,所以采用索引匹配
         mod_path = self.mods[1][currentIndex]
@@ -313,7 +325,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.progressBar_Download.setValue(value)
     def download_finished(self,path:str):
         self.isdownloading = False
-        self.progressBar_Download.value(0)
+        self.progressBar_Download.setValue(0)
         select = QMessageBox.information(self,'下载成功','下载成功,是否自动解压?',QMessageBox.Ok|QMessageBox.Cancel,QMessageBox.Cancel)
         if select == QMessageBox.Ok:
             try:
@@ -337,6 +349,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.label_about_newverison.setText("<font color=red>最新版本:连接到纯世蜉生失败,原因:{}</font>".format(err))
     def __on_pushButton_release_clicked(self):
         webbrowser.open('https://cloud.armorrush.com/Hatanezumi/RA3_affiliated_mod_downloader/releases')
+    def set_plainTextEdit_updatelog(self,text:str):
+        self.plainTextEdit_updatelog.setPlainText(text)
 def init():
     app = QApplication(sys.argv)
     main_window = MainWindow()

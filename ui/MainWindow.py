@@ -200,6 +200,7 @@ class Ui_MainWindow(object):
         self.plainTextEdit_introduce = QPlainTextEdit(self.tab_Network)
         self.plainTextEdit_introduce.setObjectName(u"plainTextEdit_introduce")
         self.plainTextEdit_introduce.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.plainTextEdit_introduce.setReadOnly(True)
 
         self.horizontalLayout_3.addWidget(self.plainTextEdit_introduce)
 
@@ -312,6 +313,18 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_10.addWidget(self.label_about_newverison)
 
+        self.label_updatelog = QLabel(self.tab_about)
+        self.label_updatelog.setObjectName(u"label_updatelog")
+
+        self.verticalLayout_10.addWidget(self.label_updatelog)
+
+        self.plainTextEdit_updatelog = QPlainTextEdit(self.tab_about)
+        self.plainTextEdit_updatelog.setObjectName(u"plainTextEdit_updatelog")
+        self.plainTextEdit_updatelog.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.plainTextEdit_updatelog.setReadOnly(True)
+
+        self.verticalLayout_10.addWidget(self.plainTextEdit_updatelog)
+
         self.pushButton_release = QPushButton(self.tab_about)
         self.pushButton_release.setObjectName(u"pushButton_release")
 
@@ -368,6 +381,7 @@ class Ui_MainWindow(object):
         self.label_about_contact.setText(QCoreApplication.translate("MainWindow", u"\u8054\u7cfb:Hatanezumi@chunshengserver.cn", None))
         self.label_about_verison.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u7248\u672c:", None))
         self.label_about_newverison.setText(QCoreApplication.translate("MainWindow", u"\u6700\u65b0\u7248\u672c:", None))
+        self.label_updatelog.setText(QCoreApplication.translate("MainWindow", u"\u66f4\u65b0\u65e5\u5fd7:", None))
         self.pushButton_release.setText(QCoreApplication.translate("MainWindow", u"\u53d1\u5e03\u9875", None))
         self.tabWidget_Main.setTabText(self.tabWidget_Main.indexOf(self.tab_about), QCoreApplication.translate("MainWindow", u"\u5173\u4e8e", None))
 #if QT_CONFIG(statustip)

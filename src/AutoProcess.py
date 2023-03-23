@@ -5,7 +5,6 @@
 @Contact : Hatanezumi@chunshengserver.cn
 '''
 import os
-import json
 import requests
 
 def get_mods(base_path:str) -> tuple[bool,str|list[str]]:
@@ -43,7 +42,7 @@ def get_cloud(path:str, target, arg):
         if req.status_code != 200:
             target(arg,False,"返回值为:{}".format(req.status_code))
             return
-        res = json.loads(req.content)
+        res = req.content
         target(arg,True,res)
     except Exception as err:
         target(arg,False,err)
