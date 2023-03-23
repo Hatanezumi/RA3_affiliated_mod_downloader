@@ -336,7 +336,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def get_new_version_err(self,err:str):
         self.label_about_newverison.setText("<font color=red>最新版本:连接到纯世蜉生失败,原因:{}</font>".format(err))
     def __on_pushButton_release_clicked(self):
-        webbrowser.open('https://cloud.armorrush.com/Hatanezumi')
+        webbrowser.open('https://cloud.armorrush.com/Hatanezumi/RA3_affiliated_mod_downloader/releases')
 def init():
     app = QApplication(sys.argv)
     main_window = MainWindow()
