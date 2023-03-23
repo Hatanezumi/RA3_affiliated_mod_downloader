@@ -9,9 +9,9 @@ import sys
 import py7zr
 import requests
 import webbrowser
-from PySide2.QtWidgets import QApplication, QMessageBox, QFileDialog, QInputDialog, QMainWindow, QComboBox
-from PySide2.QtCore import Qt, QStringListModel, Signal, QObject
-from PySide2.QtGui import QColor,QIcon, QTextCursor
+from PySide6.QtWidgets import QApplication, QMessageBox, QFileDialog, QInputDialog, QMainWindow, QComboBox
+from PySide6.QtCore import Qt, QStringListModel, Signal, QObject
+from PySide6.QtGui import QColor,QIcon, QTextCursor
 from ui.MainWindow import Ui_MainWindow
 from threading import Thread
 from src import AutoProcess
