@@ -116,7 +116,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if os.path.exists(os.path.join(os.getcwd(),'ui','ra3.ico')):
             self.icon = QIcon(os.path.join(os.getcwd(),'ui','ra3.ico'))
             self.setWindowIcon(self.icon)
-        self.version = '1.0.1'
+        self.version = '1.0.2'
         #--------------------------
         #连接信号
         self.comboBox_mods.currentIndexChanged.connect(self.__comboBox_mods_changed)#下拉框内容改变
