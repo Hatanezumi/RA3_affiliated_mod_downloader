@@ -308,7 +308,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self,'无法下载','当前有下载任务在进行',QMessageBox.Ok,QMessageBox.Ok)
             return
         currentText = self.comboBox_download.currentText()
-        if self.cloud_mod_source[0] != self.listView_Network_qsl.stringList()[self.listView_Network.currentIndex().row()]:
+        if self.cloud_mod_source[0] == None:
             return
         link = ''
         for source in self.cloud_mod_source[1]:
@@ -326,7 +326,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def download_finished(self,path:str):
         self.isdownloading = False
         self.progressBar_Download.setValue(0)
-        select = QMessageBox.information(self,'下载成功','下载成功,是否自动解压?',QMessageBox.Ok|QMessageBox.Cancel,QMessageBox.Cancel)
+        select = QMessageBox.question(self,'下载成功','下载成功,是否自动解压?',QMessageBox.Ok|QMessageBox.Cancel,QMessageBox.Cancel)
         if select == QMessageBox.Ok:
             try:
                 with py7zr.SevenZipFile(file=path,mode='r') as file:
@@ -335,7 +335,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 QMessageBox.warning(self,'解压失败','解压失败,原因:{}'.format(err),QMessageBox.Ok,QMessageBox.Ok)
                 return
             else:
-                QMessageBox.warning(self,'解压成功','解压成功',QMessageBox.Ok,QMessageBox.Ok)     
+                QMessageBox.information(self,'解压成功','解压成功',QMessageBox.Ok,QMessageBox.Ok)     
     def download_err(self,err:Exception):
         self.isdownloading = False
         QMessageBox.warning(self,'下载失败','下载失败,原因:{}'.format(err),QMessageBox.Ok,QMessageBox.Ok)
@@ -345,6 +345,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self_version = int(self.version.replace('.',''))
         if version_int > self_version:
             self.label_about_newverison.setText("<font color=red>最新版本:"+version+"(有更新!请点击发布页下载)</font>")
+            self.setStatusTip('有新版本!({})'.format(version))
     def get_new_version_err(self,err:str):
         self.label_about_newverison.setText("<font color=red>最新版本:连接到纯世蜉生失败,原因:{}</font>".format(err))
     def __on_pushButton_release_clicked(self):
