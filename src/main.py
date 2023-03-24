@@ -308,7 +308,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.information(self,'无法下载','当前有下载任务在进行',QMessageBox.Ok,QMessageBox.Ok)
             return
         currentText = self.comboBox_download.currentText()
-        if self.cloud_mod_source[0] == None:
+        if self.cloud_mod_source[0] != self.listView_Network_qsl.stringList()[self.listView_Network.currentIndex().row()]:
             return
         link = ''
         for source in self.cloud_mod_source[1]:
