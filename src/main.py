@@ -15,7 +15,6 @@ from PySide6.QtCore import Qt, QStringListModel, Signal, QObject
 from PySide6.QtGui import QColor,QIcon, QTextCursor
 from ui.MainWindow import Ui_MainWindow
 from threading import Thread
-import ctypes.wintypes
 from src import AutoProcess
 
 #常量
@@ -116,7 +115,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if os.path.exists(os.path.join(os.getcwd(),'ui','ra3.ico')):
             self.icon = QIcon(os.path.join(os.getcwd(),'ui','ra3.ico'))
             self.setWindowIcon(self.icon)
-        self.version = '1.0.2'
+        self.version = '1.0.3'
         #--------------------------
         #连接信号
         self.comboBox_mods.currentIndexChanged.connect(self.__comboBox_mods_changed)#下拉框内容改变
@@ -132,6 +131,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_refresh.clicked.connect(self.__on_pushButton_refresh_clicked)#刷新按钮被按下
         self.pushButton_Download.clicked.connect(self.__on_pushButton_Download_clicked)#下载按钮被按下
         self.pushButton_release.clicked.connect(self.__on_pushButton_release_clicked)#发布页按钮被按下
+        self.pushButton_changeDir_RA3.clicked.connect(self.__on_pushButton_changeDir_RA3_clicked)#切换到RA3目录按钮被按下
+        self.pushButton_changeDir_mod.clicked.connect(self.__on_pushButton_changeDir_mod_clicked)#切换到mod目录被按下
+        self.pushButton_localRefresh.clicked.connect(self.__on_pushButton_localRefresh_clicked)#本地刷新按钮被按下
         #--------------------------
         #变量注册(全局变量)
         self.select_mod = ''
@@ -139,19 +141,17 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.listView_local_qsl = QStringListModel()
         self.listView_Network_qsl = QStringListModel()
         self.fileDialog = QFileDialog(self)
-        try:
-            buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
-            ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
-            if buf == '':
-                raise Exception('目录获取失败')
-            self.documents_path = buf.value
-        except:
-            self.base_mod_path = os.path.join(os.path.splitdrive(os.environ['systemroot'])[0],os.environ['homepath'],'Documents','Red Alert 3','Mods')
-        else:
-            self.base_mod_path = os.path.join(self.documents_path,'Red Alert 3','Mods')
+        self.documents_path, self.base_mod_path = AutoProcess.get_mod_path()
         self.cloud_mods = {}
         self.cloud_mod_source = (None,{})
         self.isdownloading = False
+        self.ra3_path = AutoProcess.get_ra3_path()
+        if self.ra3_path[0] is False:
+            self.ra3_path = ''
+            self.pushButton_changeDir_RA3.setEnabled(False)
+            QMessageBox.warning(self,'获取RA3目录失败','无法获取RA3目录,原因:{}'.format(self.ra3_path[1]),QMessageBox.StandardButton.Ok,QMessageBox.StandardButton.Ok)
+        else:
+            self.ra3_path = self.ra3_path[1]
         #--------------------------
         #初始化内容
         self.mods = AutoProcess.get_mods(self.base_mod_path)
@@ -352,6 +352,48 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         webbrowser.open('https://cloud.armorrush.com/Hatanezumi/RA3_affiliated_mod_downloader/releases')
     def set_plainTextEdit_updatelog(self,text:str):
         self.plainTextEdit_updatelog.setPlainText(text)
+    def __on_pushButton_changeDir_RA3_clicked(self):
+        if self.ra3_path == '':
+            self.pushButton_changeDir_RA3.setEnabled(False)
+            return
+        mods = AutoProcess.get_mods(self.ra3_path)
+        if mods[0] is False:
+            QMessageBox.warning(self,'获取mod列表失败',mods[1],QMessageBox.Ok,QMessageBox.Ok)
+        else:
+            self.base_mod_path = self.ra3_path
+            self.mods = mods
+            Process.set_comboBox(self.comboBox_mods,[os.path.splitext(os.path.split(mod_name)[1])[0] for mod_name in mods[1]])
+            #显示当前目录
+            self.lineEdit_nowpath.setText(self.ra3_path)
+    def __on_pushButton_changeDir_mod_clicked(self):
+        self.documents_path, self.base_mod_path = AutoProcess.get_mod_path()
+        mods = AutoProcess.get_mods(self.base_mod_path)
+        if mods[0] is False:
+            QMessageBox.warning(self,'获取mod列表失败',mods[1],QMessageBox.Ok,QMessageBox.Ok)
+        else:
+            self.mods = mods
+            Process.set_comboBox(self.comboBox_mods,[os.path.splitext(os.path.split(mod_name)[1])[0] for mod_name in mods[1]])
+            #显示当前目录
+            self.lineEdit_nowpath.setText(self.base_mod_path)
+    def __on_pushButton_localRefresh_clicked(self):
+        currentIndex = self.comboBox_mods.currentIndex()
+        now_path = self.lineEdit_nowpath.text()
+        if os.path.exists(now_path) is False:
+            self.__on_pushButton_changeDir_mod_clicked()
+            return
+        mods = AutoProcess.get_mods(now_path)
+        if mods[0] is False:
+            QMessageBox.warning(self,'获取mod列表失败',mods[1],QMessageBox.Ok,QMessageBox.Ok)
+        else:
+            self.base_mod_path = now_path
+            self.mods = mods
+            Process.set_comboBox(self.comboBox_mods,[os.path.splitext(os.path.split(mod_name)[1])[0] for mod_name in mods[1]])
+            #显示当前目录
+            self.lineEdit_nowpath.setText(now_path)
+            if currentIndex + 1  > self.comboBox_mods.count():
+                return
+            else:
+                self.comboBox_mods.setCurrentIndex(currentIndex)
 def init():
     app = QApplication(sys.argv)
     main_window = MainWindow()

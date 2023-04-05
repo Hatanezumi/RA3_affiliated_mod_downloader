@@ -135,6 +135,24 @@
            </layout>
           </item>
           <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QPushButton" name="pushButton_changeDir_RA3">
+              <property name="text">
+               <string>切换到RA3目录</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_changeDir_mod">
+              <property name="text">
+               <string>切换到mod目录</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
            <widget class="QComboBox" name="comboBox_mods"/>
           </item>
           <item>
@@ -156,6 +174,13 @@
              </size>
             </property>
            </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_localRefresh">
+            <property name="text">
+             <string>刷新</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QPushButton" name="pushButton_save">

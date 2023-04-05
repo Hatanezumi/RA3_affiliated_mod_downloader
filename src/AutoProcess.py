@@ -5,7 +5,9 @@
 @Contact : Hatanezumi@chunshengserver.cn
 '''
 import os
+import winreg
 import requests
+import ctypes.wintypes
 
 def get_mods(base_path:str) -> tuple[bool,str|list[str]]:
     if os.path.exists(base_path) is False:
@@ -46,3 +48,31 @@ def get_cloud(path:str, target, arg):
         target(arg,True,res)
     except Exception as err:
         target(arg,False,err)
+def get_ra3_path(base_reg_path:str = None) -> tuple[bool,str]:
+    try:
+        if base_reg_path is None:
+            base_reg_path = 'SOFTWARE\\WOW6432Node'
+        key = winreg.OpenKeyEx(winreg.HKEY_LOCAL_MACHINE,base_reg_path + '\\Electronic Arts\\Electronic Arts\\Red Alert 3')
+        dir = winreg.QueryValueEx(key,'Install Dir')
+        return (True,dir[0])
+    except FileNotFoundError:
+        if base_reg_path == 'SOFTWARE\\WOW6432Node':
+            return get_ra3_path('SOFTWARE\\')
+        else:
+            return (False,'未找到RA3根目录,你确定安装了吗?或尝试修复注册表')
+    except Exception as err:
+        return (False,err)
+def get_mod_path() -> tuple[str,str]:
+    '''
+    返回文档路径和mod路径
+    '''
+    try:
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
+        if buf == '':
+            raise Exception('目录获取失败')
+        documents_path = buf.value
+    except:
+        documents_path = os.path.join(os.path.splitdrive(os.environ['systemroot'])[0],os.environ['homepath'],'Documents')
+    base_mod_path = os.path.join(documents_path,'Red Alert 3','Mods')
+    return (documents_path,base_mod_path)

@@ -126,6 +126,21 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_6)
 
+        self.horizontalLayout_8 = QHBoxLayout()
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.pushButton_changeDir_RA3 = QPushButton(self.tab_local)
+        self.pushButton_changeDir_RA3.setObjectName(u"pushButton_changeDir_RA3")
+
+        self.horizontalLayout_8.addWidget(self.pushButton_changeDir_RA3)
+
+        self.pushButton_changeDir_mod = QPushButton(self.tab_local)
+        self.pushButton_changeDir_mod.setObjectName(u"pushButton_changeDir_mod")
+
+        self.horizontalLayout_8.addWidget(self.pushButton_changeDir_mod)
+
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout_8)
+
         self.comboBox_mods = QComboBox(self.tab_local)
         self.comboBox_mods.setObjectName(u"comboBox_mods")
 
@@ -139,6 +154,11 @@ class Ui_MainWindow(object):
         self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout_4.addItem(self.verticalSpacer)
+
+        self.pushButton_localRefresh = QPushButton(self.tab_local)
+        self.pushButton_localRefresh.setObjectName(u"pushButton_localRefresh")
+
+        self.verticalLayout_4.addWidget(self.pushButton_localRefresh)
 
         self.pushButton_save = QPushButton(self.tab_local)
         self.pushButton_save.setObjectName(u"pushButton_save")
@@ -364,7 +384,10 @@ class Ui_MainWindow(object):
         self.pushButton_L.setText(QCoreApplication.translate("MainWindow", u"-", None))
         self.label_nowpath.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u76ee\u5f55:", None))
         self.pushButton_nowpath.setText(QCoreApplication.translate("MainWindow", u"...", None))
+        self.pushButton_changeDir_RA3.setText(QCoreApplication.translate("MainWindow", u"\u5207\u6362\u5230RA3\u76ee\u5f55", None))
+        self.pushButton_changeDir_mod.setText(QCoreApplication.translate("MainWindow", u"\u5207\u6362\u5230mod\u76ee\u5f55", None))
         self.label_nowdir.setText(QCoreApplication.translate("MainWindow", u"\u5f53\u524d\u6587\u4ef6\u5939:", None))
+        self.pushButton_localRefresh.setText(QCoreApplication.translate("MainWindow", u"\u5237\u65b0", None))
         self.pushButton_save.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58", None))
         self.tabWidget_Main.setTabText(self.tabWidget_Main.indexOf(self.tab_local), QCoreApplication.translate("MainWindow", u"\u672c\u5730", None))
         self.pushButton_refresh.setText(QCoreApplication.translate("MainWindow", u"\u5237\u65b0", None))
