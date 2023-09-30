@@ -35,7 +35,7 @@ class CustomizeSingals(QObject):
     set_listView_Network = Signal(dict)
     set_Status_Tip = Signal(str)
     set_progressBar_Download = Signal(int)
-    download_finished = Signal(str)
+    download_finished = Signal(str,dict)
     download_err = Signal(Exception)
     set_new_version = Signal(str)
     get_new_version_err = Signal(str)
@@ -85,7 +85,7 @@ class Process():
         except Exception as err:
             singals.message_box.emit((WARNING,'出现错误',"获取信息失败:{}".format(err),QMessageBox.Ok,QMessageBox.Ok))
     @staticmethod
-    def download(window:QMainWindow,url:str,path:str):
+    def download(window:QMainWindow,url:str,path:str,info:dict):
         signals = CustomizeSingals()
         signals.set_progressBar_Download.connect(window.set_progressBar_Download)
         signals.download_finished.connect(window.download_finished)
@@ -93,20 +93,35 @@ class Process():
         if not os.path.exists(os.path.split(path)[0]):
             signals.download_err.emit('目录不存在:{}'.format(os.path.split(path)[0]))
             return
-        res = requests.get(url, stream=True,headers={"Accept-Encoding":"identity"})
-        size = 0#初始化已下载大小
-        chunk_size = 1024#单次下载量
-        content_size = int(res.headers['content-length'])#总大小
         try:
+            res = requests.get(url, stream=True,headers={"Accept-Encoding":"identity"},timeout=10)
+            size = 0#初始化已下载大小
+            chunk_size = 1024#单次下载量
+            content_size = int(res.headers['content-length'])#总大小
             if res.status_code == 200:
                 with open(path,'wb') as file:
                     for data in res.iter_content(chunk_size=chunk_size):
+                        if window.isdownloading is False:
+                            file.close()
+                            os.remove(path)
+                            signals.set_progressBar_Download.emit(0)
+                            return
                         file.write(data)
                         size += len(data)
                         signals.set_progressBar_Download.emit(int(size / content_size * 100))
-            signals.download_finished.emit(path)
+            signals.download_finished.emit(path,info)
         except Exception as err:
             signals.download_err.emit(err)
+    @staticmethod
+    def clear_localPage_everything(window:QMainWindow):
+        '''
+        清除本地页面中能显示的所有的物体的内容
+        '''
+        window.comboBox_mods.clear()
+        window.listView_local_qsl.setStringList([])
+        window.listView_loaded_qsl.setStringList([])
+        window.lineEdit_nowpath.setText('')
+        window.label_nowdir.setText('')
 class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None) -> None:
         #基础设置
@@ -115,7 +130,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if os.path.exists(os.path.join(os.getcwd(),'ui','ra3.ico')):
             self.icon = QIcon(os.path.join(os.getcwd(),'ui','ra3.ico'))
             self.setWindowIcon(self.icon)
-        self.version = '1.0.3'
+        self.version = '1.1.0'
         #--------------------------
         #连接信号
         self.comboBox_mods.currentIndexChanged.connect(self.__comboBox_mods_changed)#下拉框内容改变
@@ -134,6 +149,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_changeDir_RA3.clicked.connect(self.__on_pushButton_changeDir_RA3_clicked)#切换到RA3目录按钮被按下
         self.pushButton_changeDir_mod.clicked.connect(self.__on_pushButton_changeDir_mod_clicked)#切换到mod目录被按下
         self.pushButton_localRefresh.clicked.connect(self.__on_pushButton_localRefresh_clicked)#本地刷新按钮被按下
+        self.pushButton_changeDir_ARModLauncher.clicked.connect(self.__on_pushButton_changeDir_ARModLauncher_clicked)#切换到AR启动器目录按钮被按下
         #--------------------------
         #变量注册(全局变量)
         self.select_mod = ''
@@ -145,6 +161,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.cloud_mods = {}
         self.cloud_mod_source = (None,{})
         self.isdownloading = False
+        self.selected_mod_info = {}
+        self.download_info = (None,None)#第一个参数为线程,第二个参数为保存地址
         self.ra3_path = AutoProcess.get_ra3_path()
         if self.ra3_path[0] is False:
             self.ra3_path = ''
@@ -152,6 +170,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self,'获取RA3目录失败','无法获取RA3目录,原因:{}'.format(self.ra3_path[1]),QMessageBox.StandardButton.Ok,QMessageBox.StandardButton.Ok)
         else:
             self.ra3_path = self.ra3_path[1]
+        self.ARModLauncher_path = AutoProcess.get_ARModLauncher_path()
+        if self.ARModLauncher_path[0] is False:
+            self.ARModLauncher_path = ''
+            self.pushButton_changeDir_ARModLauncher.setEnabled(False)
+        else:
+            self.ARModLauncher_path = os.path.join(self.ARModLauncher_path[1],'Resources','CustomContent')
         #--------------------------
         #初始化内容
         self.mods = AutoProcess.get_mods(self.base_mod_path)
@@ -161,7 +185,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             Process.set_comboBox(self.comboBox_mods,[os.path.splitext(os.path.split(mod_name)[1])[0] for mod_name in self.mods[1]])
         self.label_about_verison.setText('当前版本:{}'.format(self.version))
         #绑定模型
-        self.listView_loacl.setModel(self.listView_local_qsl)
+        self.listView_local.setModel(self.listView_local_qsl)
         self.listView_loaded.setModel(self.listView_loaded_qsl)
         self.listView_Network.setModel(self.listView_Network_qsl)
         #显示当前目录
@@ -197,7 +221,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #显示保存到文件夹
         self.lineEdit_savedir.setText(os.path.split(mod_path)[0])
     def __on_pushButton_R_clicked(self):
-        currentIndex = self.listView_loacl.currentIndex().row()
+        currentIndex = self.listView_local.currentIndex().row()
         if currentIndex == -1:
             return
         select_mod_name = self.listView_local_qsl.stringList()[currentIndex]
@@ -289,6 +313,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif mode == CRITICAL:
             QMessageBox.Critical(self,title,text,Button,defaultButton)
     def set_network_page(self,res:dict):
+        self.selected_mod_info = res
         self.label_name.setText('名称:'+res['name'])
         self.label_author.setText('作者:'+res['author'])
         self.label_version.setText('版本:'+res['version'])
@@ -305,7 +330,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         t.start()
     def __on_pushButton_Download_clicked(self):
         if self.isdownloading:
-            QMessageBox.information(self,'无法下载','当前有下载任务在进行',QMessageBox.Ok,QMessageBox.Ok)
+            select = QMessageBox.question(self,'是否终止','确定要终止下载?已下载的进度不会被保存',QMessageBox.Yes|QMessageBox.Cancel,QMessageBox.Cancel)
+            if select == QMessageBox.Yes:
+                self.isdownloading = False
+                self.pushButton_Download.setText('下载')
             return
         currentText = self.comboBox_download.currentText()
         if self.cloud_mod_source[0] != self.listView_Network_qsl.stringList()[self.listView_Network.currentIndex().row()]:
@@ -319,25 +347,59 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         file_name = link.split('/')[-1]
         save_path = self.lineEdit_savedir.text()
         self.isdownloading = True
-        t = Thread(target=Process.download,args=(self,link,os.path.join(save_path,file_name)),daemon=True)
+        self.pushButton_Download.setText('终止')
+        t = Thread(target=Process.download,args=(self,link,os.path.join(save_path,file_name),self.selected_mod_info),daemon=True)
+        self.download_info = (t,os.path.join(save_path,file_name))
         t.start()
     def set_progressBar_Download(self,value:int):
         self.progressBar_Download.setValue(value)
-    def download_finished(self,path:str):
+    def download_finished(self,path:str,info:dict):
         self.isdownloading = False
         self.progressBar_Download.setValue(0)
-        select = QMessageBox.question(self,'下载成功','下载成功,是否自动解压?',QMessageBox.Ok|QMessageBox.Cancel,QMessageBox.Cancel)
-        if select == QMessageBox.Ok:
+        in_ARModLauncher_path = False
+        self.pushButton_Download.setText('下载')
+        outpath = os.path.split(path)[0]
+        if os.path.split(path)[0] == self.ARModLauncher_path:
+            in_ARModLauncher_path = True
+            outpath = os.path.join(outpath,os.path.split(path)[1].split('.')[0])
+        select = QMessageBox.question(self,'下载成功','下载成功,是否自动解压?',QMessageBox.Yes|QMessageBox.Cancel,QMessageBox.Yes)
+        if select == QMessageBox.Yes:
             try:
+                if not os.path.exists(outpath):
+                    os.mkdir(outpath)
                 with py7zr.SevenZipFile(file=path,mode='r') as file:
-                    file.extractall(path=os.path.split(path)[0])
+                    file.extractall(path=outpath)
             except Exception as err:
                 QMessageBox.warning(self,'解压失败','解压失败,原因:{}'.format(err),QMessageBox.Ok,QMessageBox.Ok)
                 return
             else:
-                QMessageBox.information(self,'解压成功','解压成功',QMessageBox.Ok,QMessageBox.Ok)     
+                QMessageBox.information(self,'解压成功','解压成功',QMessageBox.Ok,QMessageBox.Ok) 
+        if in_ARModLauncher_path:
+            select = QMessageBox.question(self,'是否生成配置文件','检测到当前位于AR启动器的目录中,是否生成可以被AR启动器识别的附属mod配置文件?',QMessageBox.Yes|QMessageBox.Cancel,QMessageBox.Yes)
+            if select == QMessageBox.Yes:
+                try:
+                    mods = [i for i in os.listdir(outpath) if os.path.splitext(i)[-1].lower() == '.skudef']
+                    info_keys = info.keys()
+                    mod_info = {}
+                    mod_info['Id'] = os.path.split(path)[1].split('.')[0]
+                    mod_info['Version'] = info['version'] if 'version' in info_keys else 'None'
+                    mod_info['DisplayName_CN'] = info['name'] if 'name' in info_keys else 'None'
+                    mod_info['DisplayName_EN'] = info['name_EN'] if 'name_EN' in info_keys else 'None'
+                    mod_info['FilePath'] = os.path.join(os.path.split(path)[1].split('.')[0],mods[0])#仅添加第一个找到的skudef文件
+                    mod_info['Desc_CN'] = info['introduce'] if 'introduce' in info_keys else 'None'
+                    mod_info['Desc_EN'] = info['introduce_EN'] if 'introduce_EN' in info_keys else 'None'
+                    with open(os.path.join(outpath,'config.json'),'w') as file:
+                        json.dump(mod_info,file)
+                except Exception as err:
+                    QMessageBox.warning(self,'生成失败','生成失败,原因:{}'.format(err),QMessageBox.Ok,QMessageBox.Ok)
+                    return 
+                else:
+                    QMessageBox.information(self,'生成成功','生成成功',QMessageBox.Ok,QMessageBox.Ok) 
     def download_err(self,err:Exception):
         self.isdownloading = False
+        os.remove(self.download_info[1])
+        self.progressBar_Download.setValue(0)
+        self.pushButton_Download.setText('下载')
         QMessageBox.warning(self,'下载失败','下载失败,原因:{}'.format(err),QMessageBox.Ok,QMessageBox.Ok)
     def set_new_version(self,version:str):
         self.label_about_newverison.setText("最新版本:"+version)
@@ -394,6 +456,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
                 return
             else:
                 self.comboBox_mods.setCurrentIndex(currentIndex)
+    def __on_pushButton_changeDir_ARModLauncher_clicked(self):
+        if self.ARModLauncher_path == '':
+            self.pushButton_changeDir_ARModLauncher.setEnabled(False)
+            return
+        self.lineEdit_savedir.setText(self.ARModLauncher_path)
 def init():
     app = QApplication(sys.argv)
     main_window = MainWindow()

@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'MainWindow.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.4.2
+## Created by: Qt User Interface Compiler version 6.5.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -43,11 +43,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_3.addWidget(self.label_local)
 
-        self.listView_loacl = QListView(self.tab_local)
-        self.listView_loacl.setObjectName(u"listView_loacl")
-        self.listView_loacl.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.listView_local = QListView(self.tab_local)
+        self.listView_local.setObjectName(u"listView_local")
+        self.listView_local.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
-        self.verticalLayout_3.addWidget(self.listView_loacl)
+        self.verticalLayout_3.addWidget(self.listView_local)
 
 
         self.horizontalLayout.addLayout(self.verticalLayout_3)
@@ -276,6 +276,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_8.addLayout(self.horizontalLayout_7)
 
+        self.pushButton_changeDir_ARModLauncher = QPushButton(self.tab_Network)
+        self.pushButton_changeDir_ARModLauncher.setObjectName(u"pushButton_changeDir_ARModLauncher")
+
+        self.verticalLayout_8.addWidget(self.pushButton_changeDir_ARModLauncher)
+
         self.verticalSpacer_3 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout_8.addItem(self.verticalSpacer_3)
@@ -398,6 +403,7 @@ class Ui_MainWindow(object):
         self.label_savedir.setText(QCoreApplication.translate("MainWindow", u"\u4fdd\u5b58\u5230:", None))
         self.pushButton_savedir.setText(QCoreApplication.translate("MainWindow", u"...", None))
         self.label_source.setText(QCoreApplication.translate("MainWindow", u"\u4e0b\u8f7d\u6e90:", None))
+        self.pushButton_changeDir_ARModLauncher.setText(QCoreApplication.translate("MainWindow", u"\u5207\u6362\u5230AR\u542f\u52a8\u5668\u76ee\u5f55", None))
         self.pushButton_Download.setText(QCoreApplication.translate("MainWindow", u"\u4e0b\u8f7d", None))
         self.tabWidget_Main.setTabText(self.tabWidget_Main.indexOf(self.tab_Network), QCoreApplication.translate("MainWindow", u"\u7f51\u7edc", None))
         self.label_about_author.setText(QCoreApplication.translate("MainWindow", u"\u4f5c\u8005:\u7530\u9f20-Hatanezumi", None))

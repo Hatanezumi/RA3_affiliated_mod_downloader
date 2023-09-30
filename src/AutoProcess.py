@@ -76,3 +76,13 @@ def get_mod_path() -> tuple[str,str]:
         documents_path = os.path.join(os.path.splitdrive(os.environ['systemroot'])[0],os.environ['homepath'],'Documents')
     base_mod_path = os.path.join(documents_path,'Red Alert 3','Mods')
     return (documents_path,base_mod_path)
+def get_ARModLauncher_path() -> tuple[bool,str]:
+    try:
+        key = winreg.OpenKeyEx(winreg.HKEY_LOCAL_MACHINE,'SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\ARModLauncher.exe')
+        dir = winreg.QueryValueEx(key,'')
+        dir = os.path.split(dir[0])[0]
+        return (True,dir)
+    except FileNotFoundError:
+        return (False,'未找到AR启动器目录')
+    except Exception as err:
+        return (False,err)

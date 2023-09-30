@@ -38,7 +38,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QListView" name="listView_loacl">
+           <widget class="QListView" name="listView_local">
             <property name="editTriggers">
              <set>QAbstractItemView::NoEditTriggers</set>
             </property>
@@ -322,6 +322,13 @@
              <widget class="QComboBox" name="comboBox_download"/>
             </item>
            </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_changeDir_ARModLauncher">
+            <property name="text">
+             <string>切换到AR启动器目录</string>
+            </property>
+           </widget>
           </item>
           <item>
            <spacer name="verticalSpacer_3">
